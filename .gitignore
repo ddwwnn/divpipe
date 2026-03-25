@@ -1,0 +1,90 @@
+# secrets
+.env
+*.env
+.env.*
+
+# python
+__pycache__/
+*.py[cod]
+*$py.class
+venv/
+.venv/
+env/
+
+# outputs & caches
+output/
+data/_cache/
+
+# data (private by default)
+data/*
+
+# allow public sample/config data
+!data/sample/
+!data/sample/**
+!data/config/
+!data/config/**
+!src/engine/divpipe/config/
+!src/engine/divpipe/config/**
+
+
+# overrides: keep only template/sample/demo
+!data/overrides/
+data/overrides/*
+!data/overrides/*template*.csv
+!data/overrides/*sample*.csv
+!data/overrides/*demo*.csv
+data/overrides/qa_decisions.csv
+
+# private modules
+src/engine/krdiv/
+src/engine/legacy/
+
+# private legacy scripts
+scripts/legacy/
+
+# local-only tests
+tests_krdiv/
+
+# local ticker maps
+data/chosen_ticker_map.csv
+data/mapping.csv
+data/chosen_ticker_map.csv.bak
+data/chosen_ticker_map.csv.bak2
+
+# ad-hoc overlap samples
+bbg_overlap_samples__*.csv
+
+# raw/versioned/private data
+data/raw/
+data/raw_versions/
+data/holdings/archive/
+data/holdings/latest_versions/
+
+# timestamped bak files
+*.bak_*
+*.bak
+
+# local artifacts
+*.xlsx
+~$*.xlsx
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.idea/
+
+# packaging
+dist/
+build/
+*.egg-info/
+**/*.egg-info/
+
+# caches
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.tmp/
+
+

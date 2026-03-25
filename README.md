@@ -109,12 +109,20 @@ flowchart LR
 
 | Output | Purpose |
 |---|---|
-| `seed_yfinance_dividends_all.csv` | Canonical Stage 1 seed rows |
+| `seed_yfinance_dividends_all.csv` | Canonical Stage 1 seed rows from provider-observed dividend events |
+| `seed_yfinance_errors_all.csv` | Provider-level hard-failure surface for Stage 1 fetch and contract issues |
+| `seed_yfinance_no_dividends_all.csv` | Stage 1 no-dividend triage surface covering genuine no-dividend windows, coverage-limited cases and venue-policy review paths |
+| `seed_yfinance_discovered_candidates_all.csv` | Candidate-resolution audit surface used for ticker QA, venue ambiguity review and cache maintenance |
+| `ticker_map_report.csv` | Main Stage 1 ticker-resolution outcome summary |
+| `ticker_failed_queue.csv` | Direct Stage 1 queue for failed or untrusted ticker-resolution cases |
+| `ticker_anomaly_queue.csv` | Secondary Stage 1 ticker QA surface for anomalous but non-hard-failure resolution outcomes |
+| `ticker_resolution_review_queue.csv` | Review-priority Stage 1 queue for ambiguous or policy-sensitive ticker-resolution cases |
 | `seed_yfinance_dividends_all__linked_severity.csv` | Row-level linked dataset with economic ids and severity tiers |
 | `econ_severity_summary.csv` | Economic-event review surface |
-| `qa_queue__econ.csv` / `qa_queue__rows.csv` | Operator review queues |
-| `qa_queue__o3_pairs.csv` / `qa_queue__o3_econ.csv` | Optional O3 drift review surfaces |
-| `stage1_summary.json` | Stage 1 per-tag metrics, failure summary and timing metadata |
+| `qa_queue__econ.csv` / `qa_queue__rows.csv` | Operator review queues for Tier 0 and Tier 1 event ambiguity |
+| `qa_queue__o3_pairs.csv` / `qa_queue__o3_econ.csv` | Optional O3 drift review surfaces when enabled by policy or diagnostics |
+| `_meta/run_args.json` | Resolved runtime inputs, layout metadata and replay audit trail for the run |
+| `_meta/stage1_summary.json` | Stage 1 per-tag metrics, failure summary and timing metadata |
 
 ---
 
@@ -156,13 +164,14 @@ Likewise, a case should not be marked unsupported merely because more than one p
 
 ### Current venue-policy treatment
 
-| Pattern | v1 treatment | Rationale |
-|---|---|---|
-| UAE | Unsupported boundary | Current provider-side venue resolution is not dependable enough for repeatable automated handling across UAE aliases and exchange-specific mappings |
-| Philippines (`.PS`) | Coverage-limited review | Ticker existence may be observable while dividend-history retrieval remains incomplete, unstable or absent under the current provider surface |
-| Russia local listings | Unsupported boundary | Dependable automated local-venue resolution and dividend retrieval cannot currently be assured within the present v1 policy boundary |
-| HK–SG cross-list ambiguity | Policy-resolved ambiguity | Better handled through deterministic venue precedence and tie-break rules than through broad unsupported classification |
-| NSE–BSE dual listing | Policy-resolved ambiguity | Better handled through deterministic market-preference rules than through blanket exclusion or unsupported treatment |
+| Pattern | v1 treatment | Evidence status | Rationale |
+|---|---|---|---|
+| UAE | Venue-policy review | Policy present; currently treated conservatively with review visibility preserved | Current provider-side venue resolution is not dependable enough for repeatable automated handling across UAE aliases and exchange-specific mappings |
+| Philippines (`.PS`) | Coverage-limited review | Observed | Ticker existence may be observable while dividend-history retrieval remains incomplete, unstable or absent under the current provider surface |
+| Russia local listings | Unsupported boundary | Policy present | Dependable automated local-venue resolution and dividend retrieval cannot currently be assured within the present v1 policy boundary |
+| NSE–BSE dual listing | Policy-resolved ambiguity | Observed | Better handled through deterministic market-preference rules than through blanket exclusion or unsupported treatment |
+
+Evidence status is stated relative to the current implemented policy surface and the review artefacts observed in the current public run.
 
 Practical interpretation in v1:
 
@@ -199,14 +208,16 @@ python -m pip install -e .
 
 mkdir -p data/raw/ishares
 
+END_DATE="$(date +%Y%m%d)"
+
 divpipe ishares download --etf EEM EFA --out data/raw/ishares
 divpipe ishares normalise --etf EEM EFA
 
 divpipe ingest \
   --holdings data/holdings_EEM.csv data/holdings_EFA.csv \
   --tags EEM EFA \
-  --bgn 20240101 \
-  --end 20241231
+  --bgn 20260101 \
+  --end "${END_DATE}"
 
 divpipe severity \
   --qa-decisions data/overrides/qa_decisions.csv
@@ -217,6 +228,7 @@ Notes:
 - `mkdir -p data/raw/ishares` is shown for explicitness. The workflow should create required directories when possible, but creating the raw cache directory up front keeps the Quickstart unambiguous.
 - `divpipe ishares normalise` reads raw iShares JSON snapshots and produces `data/holdings_<ETF>.csv` matching the Stage 1 holdings input contract.
 - `data/holdings_<ETF>.csv` remains the Stage 1 holdings input contract.
+- These examples assume a current as-of workflow using the latest downloaded iShares holdings snapshot, so `--end` should normally be set to the execution date.
 - Stage 2 is offline-capable as long as Stage 1 seed artefacts already exist under the run root.
 - `data/overrides/qa_decisions.csv` is local-only and should not be committed.
 - Stage 1 requires explicit `--tags` by default.
@@ -282,26 +294,32 @@ As a result:
 Stage 1 always creates a new run root.
 
 ```bash
+END_DATE="$(date +%Y%m%d)"
+
 divpipe ingest \
   --holdings data/holdings_EEM.csv data/holdings_EFA.csv \
   --tags EEM EFA \
-  --bgn 20240101 \
-  --end 20241231
+  --bgn 20260101 \
+  --end "${END_DATE}"
 ```
 
 These holdings files are generated by `divpipe ishares normalise`; they are no longer manually assembled from separate mapping files.
+
+These examples assume a current as-of workflow using the latest downloaded iShares holdings snapshot, so `--end` should normally be set to the execution date.
 
 A deliberate v1 safeguard is strict tag handling: Stage 1 requires explicit `--tags` by default and only permits filename-based inference when `--allow-tag-inference` is explicitly set.
 
 Optional explicit tag and region control:
 
 ```bash
+END_DATE="$(date +%Y%m%d)"
+
 divpipe ingest \
   --holdings data/custom_a.csv data/custom_b.csv \
   --tags CUSTOM_A CUSTOM_B \
   --regions EM DM \
-  --bgn 20240101 \
-  --end 20241231
+  --bgn 20260101 \
+  --end "${END_DATE}"
 ```
 
 Stage 1 writes:
@@ -314,7 +332,7 @@ Stage 1 writes:
 - `ticker_failed_queue.csv`
 - `ticker_anomaly_queue.csv`
 - `ticker_resolution_review_queue.csv`
-- `stage1_summary.json`
+- `_meta/stage1_summary.json`
 
 These artefacts make Stage 1 resolution outcomes directly reviewable before Stage 2 severity processing.
 
@@ -327,11 +345,13 @@ Stage 1 policy notes:
 - to publish latest even with partial failures, pass:
 
   ```bash
+  END_DATE="$(date +%Y%m%d)"
+
   divpipe ingest \
     --holdings data/holdings_EEM.csv data/holdings_EFA.csv \
     --tags EEM EFA \
-    --bgn 20240101 \
-    --end 20241231 \
+    --bgn 20260101 \
+    --end "${END_DATE}" \
     --publish-latest-on-partial-failure
   ```
 
@@ -507,6 +527,12 @@ Use `exists_ticker` first, then triage using `candidates`, `candidate_count` and
 
 This artefact should therefore be treated as a triage surface rather than a pure failure bucket.
 
+Typical Stage 1 bucketed derivatives of `seed_yfinance_no_dividends_all.csv` may include:
+- `seed_yfinance_no_dividends_all__kr.csv`
+- `seed_yfinance_no_dividends_all__rest.csv`
+- `seed_yfinance_no_dividends_all__rest__suspect_mapping.csv`
+- `seed_yfinance_no_dividends_all__unsupported.csv`
+
 ### Note on `ticker_failed_queue.csv` vs `ticker_resolution_review_queue.csv`
 
 - `ticker_failed_queue.csv`
@@ -518,7 +544,7 @@ The two files may overlap heavily in some runs, but they encode different operat
 
 ### Note on `stage1_summary.json`
 
-`stage1_summary.json` records:
+`_meta/stage1_summary.json` records:
 - resolved tags and regions
 - failed tag count and successful tag count
 - per-tag metrics under `tag_metrics`
@@ -685,7 +711,8 @@ chmod +x scripts/cleanup_editable.sh scripts/divpipe_sanity.sh
 ./scripts/divpipe_sanity.sh
 
 # optional: enable live ingest smoke with explicit date window
-RUN_INGEST_SMOKE=1 BGN=20240101 END=20241231 ./scripts/divpipe_sanity.sh
+END_DATE="$(date +%Y%m%d)"
+RUN_INGEST_SMOKE=1 BGN=20260101 END="${END_DATE}" ./scripts/divpipe_sanity.sh
 ```
 
 ---

@@ -1,0 +1,4 @@
+﻿vendor_event_id,underlying,ex_date,action,amount,div_ccy,economic_event_id,anchor_date,note
+VENDOR_EXAMPLE_001,VALE3,2025-12-27,SET_ECON_ID,,,ECON_VALE3_20251227,,Wildcard: assign a single economic_event_id to all rows under this key.
+VENDOR_EXAMPLE_002,PETR4,2025-01-15,DROP,0.10,BRL,,,Exact match: drop only this specific amount+currency row.
+VENDOR_EXAMPLE_003,005930,2025-12-27,SET_ANCHOR_DATE,,,,2025-12-27,Set anchor_date (applies only if rows support anchor_date).

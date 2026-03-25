@@ -1,0 +1,3 @@
+enabled,underlying,econ_id_a,econ_id_b,decision,canonical_econ_id,note
+true,GHI,eco_demo_f6a6e85551eebfc1,eco_demo_c0026a677adcabff,KEEP,,
+true,GHJ,eco_demo_ca899c37938f214d,eco_demo_6d4ffea513079eb9,MERGE,,

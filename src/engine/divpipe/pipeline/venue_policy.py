@@ -1,4 +1,5 @@
 # src/engine/divpipe/pipeline/venue_policy.py
+
 from __future__ import annotations
 
 import json
@@ -22,7 +23,6 @@ POLICY_REASON_NONE = "none"
 POLICY_REASON_RU_LOCAL_UNSUPPORTED = "ru_local_unsupported"
 POLICY_REASON_UAE_SYMBOL_POLICY_GAP = "uae_symbol_policy_gap"
 POLICY_REASON_PS_COVERAGE_LIMITED = "ps_coverage_limited"
-POLICY_REASON_HK_SG_CROSSLIST_AMBIGUITY = "hk_sg_crosslist_ambiguity"
 POLICY_REASON_NS_BO_DUAL_LISTING = "ns_bo_dual_listing"
 POLICY_REASON_UNCLASSIFIED_NO_DIV = "unclassified_no_div"
 
@@ -57,14 +57,6 @@ _UAE_SUFFIXES = (
 
 _PS_SUFFIXES = (
     ".PS",
-)
-
-_HK_SUFFIXES = (
-    ".HK",
-)
-
-_SG_SUFFIXES = (
-    ".SG",
 )
 
 _NS_SUFFIXES = (
@@ -321,19 +313,6 @@ def annotate_policy_columns(df: pd.DataFrame) -> pd.DataFrame:
     candidates_have_ps = _candidate_has_any_suffix(candidates, _PS_SUFFIXES)
     ps_coverage_limited = no_div_like & ps_country_case & (chosen_is_ps | candidates_have_ps)
 
-    chosen_is_hk = _endswith_any_suffix(chosen_ticker, _HK_SUFFIXES)
-    chosen_is_sg = _endswith_any_suffix(chosen_ticker, _SG_SUFFIXES)
-    candidates_have_hk = _candidate_has_any_suffix(candidates, _HK_SUFFIXES)
-    candidates_have_sg = _candidate_has_any_suffix(candidates, _SG_SUFFIXES)
-    hk_sg_crosslist_case = (
-        no_div_like
-        & (candidate_count > 1)
-        & (
-            (chosen_is_hk & candidates_have_sg)
-            | (chosen_is_sg & candidates_have_hk)
-            | (candidates_have_hk & candidates_have_sg)
-        )
-    )
 
     chosen_is_ns = _endswith_any_suffix(chosen_ticker, _NS_SUFFIXES)
     chosen_is_bo = _endswith_any_suffix(chosen_ticker, _BO_SUFFIXES)
@@ -351,7 +330,7 @@ def annotate_policy_columns(df: pd.DataFrame) -> pd.DataFrame:
 
     unresolved_exists_gap = no_div_like & (
         chosen_ticker.eq("")
-        | ((candidate_count > 1) & ~(hk_sg_crosslist_case | ns_bo_dual_listing_case))
+        | ((candidate_count > 1) & ~ns_bo_dual_listing_case)
         | (
             status.eq("VERIFIED_EXISTS_BUT_NO_DIVIDENDS")
             & exists_ticker.eq("")
@@ -369,9 +348,6 @@ def annotate_policy_columns(df: pd.DataFrame) -> pd.DataFrame:
 
     out.loc[ps_coverage_limited, "policy_bucket"] = POLICY_BUCKET_COVERAGE_LIMITED_REVIEW
     out.loc[ps_coverage_limited, "policy_reason"] = POLICY_REASON_PS_COVERAGE_LIMITED
-
-    out.loc[hk_sg_crosslist_case, "policy_bucket"] = POLICY_BUCKET_CANDIDATE_AMBIGUITY_REVIEW
-    out.loc[hk_sg_crosslist_case, "policy_reason"] = POLICY_REASON_HK_SG_CROSSLIST_AMBIGUITY
 
     out.loc[ns_bo_dual_listing_case, "policy_bucket"] = POLICY_BUCKET_VENUE_PRECEDENCE_REVIEW
     out.loc[ns_bo_dual_listing_case, "policy_reason"] = POLICY_REASON_NS_BO_DUAL_LISTING

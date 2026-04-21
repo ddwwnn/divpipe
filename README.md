@@ -895,3 +895,10 @@ The practical aim is to replace manual CSV-driven review with a durable event st
 ## Disclaimer
 
 No proprietary vendor data is included. Outputs are either synthetic or generated via public endpoints for demonstration of engineering and operational controls only.
+
+---
+
+## Contact
+
+Dawoon Na  
+[Email](mailto:nadawoon@icloud.com)

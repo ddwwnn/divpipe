@@ -898,7 +898,19 @@ No proprietary vendor data is included. Outputs are either synthetic or generate
 
 ---
 
+## Notice
+
+This repository and any accompanying materials are made available strictly for review and portfolio purposes only. No licence, right or permission is granted, whether express, implied, by conduct or otherwise, to copy, reproduce, circulate, forward, distribute, submit, adapt, use or rely upon any part of this repository or its contents for any external, commercial, recruitment, evaluative or other third-party purpose without the author's prior written consent in each particular instance.
+
+For the avoidance of doubt, this notice applies with immediate effect to any continued possession, circulation, forwarding, submission, review, copying, reproduction, distribution or other use of this repository or its contents following publication of this notice. Any such continued or further use is unauthorised unless and until expressly authorised in writing by the author.
+
+Nothing in this notice shall be taken as a waiver of any rights or remedies arising from any prior unauthorised use.
+
+© 2026 Dawoon Na. All rights reserved.
+
+---
+
 ## Contact
 
 Dawoon Na  
-[Email](mailto:nadawoon@icloud.com)
+nadawoon@icloud.com
